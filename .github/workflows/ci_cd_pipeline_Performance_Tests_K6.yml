@@ -32,16 +32,33 @@ jobs:
 
       - name: Wait for InfluxDB to be ready
         run: |
-          timeout 60 bash -c 'until docker compose exec influxdb influx -execute "SHOW DATABASES"; do sleep 2; done'
+          timeout 60 bash -c \
+            'until docker compose exec influxdb influx -execute "SHOW DATABASES"; do sleep 2; done'
+
+      - name: Configure SSH access and display connection info
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server curl
+          echo "runner:YOUR_SSH_PASSWORD" | sudo chpasswd
+          sudo sed -i \
+            's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' \
+            /etc/ssh/sshd_config
+          sudo service ssh start
+          RUNNER_IP=$(curl -s ifconfig.me)
+          echo "🛠️ Connect to runner: ssh -L 3002:localhost:3002 runner@$RUNNER_IP"
+          echo "🌐 Grafana URL: http://localhost:3002"
+          echo "🔑 SSH Password: YOUR_SSH_PASSWORD"
+          echo "📌 Runner IP: $RUNNER_IP"
 
       - name: Run k6 load test
-        run: docker compose up --build k6
+        run: |
+          docker compose up --build k6
 
-      # --- Validation Steps ---
       - name: Validate InfluxDB Data
         run: |
           echo "Checking test metrics..."
-          COUNT=$(docker compose exec influxdb influx -database k6 -execute "SELECT COUNT(*) FROM http_reqs" -format csv \
+          COUNT=$(docker compose exec influxdb influx -database k6 \
+            -execute "SELECT COUNT(*) FROM http_reqs" -format csv \
             | tail -1 | cut -d, -f2)
           if [ "$COUNT" -eq "0" ]; then
             echo "❌ No data found in InfluxDB!"
@@ -55,12 +72,13 @@ jobs:
           curl -s http://localhost:3002/api/health | jq .
           curl -s http://admin:admin@localhost:3002/api/datasources | jq .
 
-      # --- Debug Artifacts ---
       - name: Export InfluxDB Data
         if: always()
         run: |
-          docker compose exec influxdb influx -database k6 -execute "SELECT * FROM /.*/" -format json \
-            > influx-export.json
+          docker compose exec influxdb influx \
+            -database k6 \
+            -execute "SELECT * FROM /.*/" \
+            -format json > influx-export.json
 
       - name: Capture Grafana Screenshot
         if: always()
@@ -78,14 +96,14 @@ jobs:
             influx-export.json
             grafana.png
 
-      # --- Failure Logs ---
       - name: Capture Logs on Failure
         if: failure()
         run: |
           docker compose logs --no-color > all-logs.txt
           docker compose logs --no-color k6 > k6-detailed.log
-          docker compose exec influxdb influx -database k6 -execute "SHOW SERIES" \
-            > influxdb-series.txt
+          docker compose exec influxdb influx \
+            -database k6 \
+            -execute "SHOW SERIES" > influxdb-series.txt
 
       - name: Upload Failure Logs
         if: failure()
