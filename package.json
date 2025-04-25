@@ -1,0 +1,26 @@
+{
+  "name": "perforamce_testing_framework",
+  "version": "1.0.0",
+  "description": "This will be a performance framework which use Docker , Docker-compose ( influxdb , grafana, a common network) and k8s",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thaleskabza/perforamce_Testing_framework.git"
+  },
+  "keywords": [],
+  "author": "Kabelo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thaleskabza/perforamce_Testing_framework/issues"
+  },
+  "homepage": "https://github.com/thaleskabza/perforamce_Testing_framework#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "k6": "^0.0.0",
+    "morgan": "^1.10.0"
+  }
+}
