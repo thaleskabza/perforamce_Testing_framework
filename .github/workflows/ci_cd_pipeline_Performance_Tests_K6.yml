@@ -26,6 +26,7 @@ jobs:
 
       - name: Start infrastructure with Docker Compose
         run: |
+          mkdir -p ./load-test-results
           docker compose -f docker-compose.yml up -d --build
           docker compose ps
 
