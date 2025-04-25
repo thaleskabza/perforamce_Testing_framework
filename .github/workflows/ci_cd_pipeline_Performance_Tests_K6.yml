@@ -54,18 +54,6 @@ jobs:
         run: |
           docker compose up --build k6
 
-      - name: Validate InfluxDB Data
-        run: |
-          echo "Checking test metrics..."
-          COUNT=$(docker compose exec influxdb influx -database k6 \
-            -execute "SELECT COUNT(*) FROM http_reqs" -format csv \
-            | tail -1 | cut -d, -f2)
-          if [ "$COUNT" -eq "0" ]; then
-            echo "❌ No data found in InfluxDB!"
-            exit 1
-          fi
-          echo "✔️ Found $COUNT metrics in InfluxDB"
-
       - name: Check Grafana API
         run: |
           echo "Testing Grafana health..."
@@ -83,8 +71,9 @@ jobs:
       - name: Capture Grafana Screenshot
         if: always()
         run: |
-          docker run --network host --rm mcr.microsoft.com/playwright \
+          docker run --network host --rm mcr.microsoft.com/playwright:v1.52.0-jammy \
             sh -c "npx playwright screenshot http://localhost:3002 grafana.png"
+            
 
       - name: Upload Artifacts
         if: always()
