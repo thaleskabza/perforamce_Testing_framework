@@ -71,7 +71,7 @@ jobs:
       - name: Capture Grafana Screenshot
         if: always()
         run: |
-          docker run --network host --rm mcr.microsoft.com/playwright:v1.52.0-jammy \
+          docker run --network host --rm mcr.microsoft.com/playwright:v1.52.0-noble \
             sh -c "npx playwright screenshot http://localhost:3002 grafana.png"
             
 
